@@ -4,5 +4,13 @@
     <string name="reset">Reset</string>
     <string name="start">Start</string>
     <string name="stop">Stop</string>
-
+    <string name="previous_month">Previous Month</string>
+    <string name="next_month">Next Month</string>
+    <string name="set_countdown_time">Set Countdown Time</string>
+    <string name="hint_hh">HH</string>
+    <string name="hint_mm">MM</string>
+    <string name="hint_ss">SS</string>
+    <string name="time_separator">" : "</string>
+    <string name="go_to_timer">Go to Timer</string>
+    <string name="go_to_calendar">Go to Calendar</string>
 </resources>

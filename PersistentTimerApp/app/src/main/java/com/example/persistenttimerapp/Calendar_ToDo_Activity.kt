@@ -22,6 +22,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.graphics.toColorInt
 import com.example.persistenttimerapp.databinding.ActivityMainBinding
 import com.kizitonwose.calendar.core.CalendarDay
 import com.kizitonwose.calendar.core.DayPosition
@@ -90,7 +91,7 @@ class Calendar_ToDo_Activity : AppCompatActivity() {
 
     private fun showAddCategoryPopup() {
         val input = EditText(this)
-        input.hint = "Category Name"
+        input.hint = getString(R.string.category_name)
         
         val container = LinearLayout(this)
         container.orientation = LinearLayout.VERTICAL
@@ -98,7 +99,7 @@ class Calendar_ToDo_Activity : AppCompatActivity() {
         container.addView(input)
 
         val colorTitle = TextView(this)
-        colorTitle.text = "Pick a color:"
+        colorTitle.text = getString(R.string.pick_a_color)
         colorTitle.setPadding(0, 32, 0, 8)
         container.addView(colorTitle)
 
@@ -107,14 +108,14 @@ class Calendar_ToDo_Activity : AppCompatActivity() {
         colorLayout.gravity = Gravity.CENTER
         
         val colors = listOf("#E57373", "#81C784", "#64B5F6", "#FFF176", "#FFB74D", "#BA68C8", "#4DB6AC")
-        var selectedColor = Color.parseColor(colors[0])
+        var selectedColor = colors[0].toColorInt()
         val colorViews = mutableListOf<View>()
 
         fun updateColorSelection(selectedView: View, colorInt: Int) {
             selectedColor = colorInt
             colorViews.forEachIndexed { index, view ->
                 val drawable = GradientDrawable()
-                drawable.setColor(Color.parseColor(colors[index]))
+                drawable.setColor(colors[index].toColorInt())
                 if (view == selectedView) {
                     drawable.setStroke(6, Color.BLACK)
                 }
@@ -124,7 +125,7 @@ class Calendar_ToDo_Activity : AppCompatActivity() {
 
         colors.forEach { colorHex ->
             val colorView = View(this)
-            val colorInt = Color.parseColor(colorHex)
+            val colorInt = colorHex.toColorInt()
             val p = LinearLayout.LayoutParams(80, 80)
             p.setMargins(8, 8, 8, 8)
             colorView.layoutParams = p
@@ -132,13 +133,13 @@ class Calendar_ToDo_Activity : AppCompatActivity() {
             colorViews.add(colorView)
             colorLayout.addView(colorView)
         }
-        updateColorSelection(colorViews[0], Color.parseColor(colors[0]))
+        updateColorSelection(colorViews[0], colors[0].toColorInt())
         container.addView(colorLayout)
 
         AlertDialog.Builder(this)
-            .setTitle("Add New Category")
+            .setTitle(R.string.add_new_category)
             .setView(container)
-            .setPositiveButton("Add") { _, _ ->
+            .setPositiveButton(R.string.add) { _, _ ->
                 val name = input.text.toString()
                 if (name.isNotEmpty()) {
                     val category = Category(name, selectedColor)
@@ -146,7 +147,7 @@ class Calendar_ToDo_Activity : AppCompatActivity() {
                     addCategoryViews(name, selectedColor)
                 }
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(R.string.cancel, null)
             .show()
     }
 
@@ -183,7 +184,7 @@ class Calendar_ToDo_Activity : AppCompatActivity() {
         taskEditText.background = null
         taskEditText.isFocusable = false
         taskEditText.isFocusableInTouchMode = false
-        taskEditText.setImeOptions(EditorInfo.IME_ACTION_DONE)
+        taskEditText.imeOptions = EditorInfo.IME_ACTION_DONE
         taskEditText.setSingleLine(true)
 
         checkBox.setOnCheckedChangeListener { _, isChecked ->
@@ -242,7 +243,7 @@ class Calendar_ToDo_Activity : AppCompatActivity() {
             }
         }
 
-        taskEditText.setOnFocusChangeListener { _, hasFocus -> if (!hasFocus) disableEditing(taskEditText) }
+        taskEditText.onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus -> if (!hasFocus) disableEditing(taskEditText) }
 
         taskLayout.addView(checkBox)
         taskLayout.addView(taskEditText)
@@ -252,7 +253,7 @@ class Calendar_ToDo_Activity : AppCompatActivity() {
 
     private fun addAddTaskTrigger(container: LinearLayout, color: Int) {
         val trigger = TextView(this)
-        trigger.text = "Double tap to add task..."
+        trigger.text = getString(R.string.double_tap_to_add_task)
         trigger.textSize = 14f
         trigger.setTextColor(color)
         trigger.alpha = 0.5f
@@ -376,6 +377,6 @@ class Calendar_ToDo_Activity : AppCompatActivity() {
      * View holder for a single calendar day cell.
      */
     class DayViewContainer(view: View) : ViewContainer(view) {
-        val textView: android.widget.TextView = view.findViewById(R.id.calendarDayText)
+        val textView: TextView = view.findViewById(R.id.calendarDayText)
     }
 }

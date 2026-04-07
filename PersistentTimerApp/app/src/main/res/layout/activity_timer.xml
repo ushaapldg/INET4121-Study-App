@@ -29,6 +29,36 @@
             android:textColor="@color/black"
             android:textSize="18sp" />
 
+        <!-- Preset timer buttons -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingBottom="16dp">
+
+            <Button
+                android:id="@+id/preset25Button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:text="25 min" />
+
+            <Button
+                android:id="@+id/preset5Button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:text="5 min" />
+
+            <Button
+                android:id="@+id/preset15Button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="15 min" />
+
+        </LinearLayout>
+
         <!-- Input fields for HH:MM:SS format -->
         <LinearLayout
             android:layout_width="wrap_content"

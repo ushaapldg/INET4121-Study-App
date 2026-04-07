@@ -25,6 +25,9 @@ class TimerActivity : AppCompatActivity() {
             val intent = Intent(this, Calendar_ToDo_Activity::class.java)
             startActivity(intent)
         }
+        binding.preset25Button.setOnClickListener { startPreset(25) }
+        binding.preset5Button.setOnClickListener { startPreset(5) }
+        binding.preset15Button.setOnClickListener { startPreset(15) }
 
         if (dataHelper.timerCounting()) {
             startTimer()
@@ -46,6 +49,17 @@ class TimerActivity : AppCompatActivity() {
                 handler.postDelayed(this, 1000)
             }
         })
+    }
+
+    private fun startPreset(minutes: Int) {
+        dataHelper.setStopTime(null)
+        dataHelper.setStartTime(null)
+
+        val durationMs = minutes * 60 * 1000L
+        dataHelper.setCountdownDuration(durationMs)
+        dataHelper.setStartTime(Date())
+        dataHelper.setTimerCounting(true)
+        startTimer()
     }
 
     private fun startStopTimer() {

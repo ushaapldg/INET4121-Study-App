@@ -22,7 +22,7 @@ class TimerActivity : AppCompatActivity() {
         binding.startButton.setOnClickListener { startStopTimer() }
         binding.resetButton.setOnClickListener { resetTimer() }
         binding.calendarButton.setOnClickListener {
-            val intent = Intent(this, Calendar_ToDo_Activity::class.java)
+            val intent = Intent(this, StudySpaceMainActivity::class.java)
             startActivity(intent)
         }
         binding.preset25Button.setOnClickListener { startPreset(25) }

@@ -331,10 +331,10 @@ class Calendar_ToDo_Activity : AppCompatActivity() {
                     when (data.date) {
                         selectedDate -> {
                             container.textView.setTextColor(Color.WHITE)
-                            container.textView.setBackgroundColor(Color.BLUE)
+                            container.textView.setBackgroundColor(Color.rgb(103, 80, 164))
                         }
                         today -> {
-                            container.textView.setTextColor(Color.BLUE)
+                            container.textView.setTextColor(Color.rgb(103, 80, 164))
                             container.textView.setTypeface(null, Typeface.BOLD)
                         }
                         else -> {

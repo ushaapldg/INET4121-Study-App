@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".Calendar_ToDo_Activity">
+    tools:context=".StudySpaceMainActivity">
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
@@ -31,10 +31,12 @@
                     android:layout_width="48dp"
                     android:layout_height="48dp"
                     android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
+                    android:layout_marginStart="-2dp"
                     android:background="?android:attr/selectableItemBackgroundBorderless"
                     android:contentDescription="@string/previous_month"
-                    android:rotation="180"
-                    android:src="@android:drawable/ic_media_next" />
+                    android:rotation="0"
+                    android:src="@drawable/back_arrow_icon" />
 
                 <TextView
                     android:id="@+id/monthYearText"
@@ -56,7 +58,8 @@
                     android:layout_centerVertical="true"
                     android:background="?android:attr/selectableItemBackgroundBorderless"
                     android:contentDescription="@string/next_month"
-                    android:src="@android:drawable/ic_media_next" />
+                    android:rotation="180"
+                    android:src="@drawable/back_arrow_icon" />
 
             </RelativeLayout>
 

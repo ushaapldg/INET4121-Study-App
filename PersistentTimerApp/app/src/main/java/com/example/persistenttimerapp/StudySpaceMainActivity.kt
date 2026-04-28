@@ -42,7 +42,7 @@ import java.util.*
 /**
  * Main Activity that manages the Calendar View and To-Do List.
  */
-class Calendar_ToDo_Activity : AppCompatActivity() {
+class StudySpaceMainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
 
     // Calendar Variables

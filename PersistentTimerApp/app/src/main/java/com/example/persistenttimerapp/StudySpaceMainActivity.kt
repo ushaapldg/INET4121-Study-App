@@ -8,6 +8,8 @@ import android.graphics.Paint
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.GestureDetector
 import android.view.Gravity
 import android.view.KeyEvent
@@ -51,6 +53,12 @@ class StudySpaceMainActivity : AppCompatActivity() {
 
     // To-Do Variables
     private val categories = mutableListOf<Category>()
+    
+    // Data class to store task information for persistence and dots
+    data class Task(val id: String = UUID.randomUUID().toString(), var text: String, val color: Int, val categoryName: String)
+    
+    // Map to keep track of tasks for each date to show dots on the calendar and restore them in the UI
+    private val tasksByDate = mutableMapOf<LocalDate, MutableList<Task>>()
 
     data class Category(val name: String, val color: Int)
 
@@ -71,6 +79,9 @@ class StudySpaceMainActivity : AppCompatActivity() {
         binding.fabAdd.setOnClickListener {
             showAddCategoryPopup()
         }
+
+        // Initial setup of UI content
+        refreshUIForNewDay()
     }
 
     // --- To-Do List Logic ---
@@ -152,6 +163,15 @@ class StudySpaceMainActivity : AppCompatActivity() {
     }
 
     private fun addCategoryViews(name: String, color: Int) {
+        // Create a wrapper for each category to keep its title, tasks, and trigger grouped together.
+        val categoryWrapper = LinearLayout(this)
+        categoryWrapper.orientation = LinearLayout.VERTICAL
+        categoryWrapper.layoutParams = LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        binding.categoryContainer.addView(categoryWrapper)
+
         val categoryTextView = TextView(this)
         categoryTextView.text = name
         categoryTextView.textSize = 24f
@@ -161,12 +181,18 @@ class StudySpaceMainActivity : AppCompatActivity() {
         val params = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         params.setMargins(0, 32, 0, 8)
         categoryTextView.layoutParams = params
-        binding.categoryContainer.addView(categoryTextView)
+        categoryWrapper.addView(categoryTextView)
 
-        addAddTaskTrigger(binding.categoryContainer, color)
+        // RESTORE: Load any existing tasks for this category and selected date
+        val date = selectedDate ?: today
+        tasksByDate[date]?.filter { it.categoryName == name }?.forEach { task ->
+            addTaskRow(categoryWrapper, color, name, existingTask = task)
+        }
+
+        addAddTaskTrigger(categoryWrapper, color, name)
     }
 
-    private fun addTaskRow(container: LinearLayout, color: Int, index: Int = -1): EditText {
+    private fun addTaskRow(container: LinearLayout, color: Int, categoryName: String, existingTask: Task? = null, index: Int = -1): EditText {
         val taskLayout = LinearLayout(this)
         taskLayout.orientation = LinearLayout.HORIZONTAL
         val params = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
@@ -177,7 +203,6 @@ class StudySpaceMainActivity : AppCompatActivity() {
         checkBox.buttonTintList = ColorStateList.valueOf(color)
         
         val taskEditText = EditText(this)
-        taskEditText.setText("")
         taskEditText.textSize = 18f
         taskEditText.setTextColor(color)
         taskEditText.setPadding(16, 0, 16, 0)
@@ -185,7 +210,25 @@ class StudySpaceMainActivity : AppCompatActivity() {
         taskEditText.isFocusable = false
         taskEditText.isFocusableInTouchMode = false
         taskEditText.imeOptions = EditorInfo.IME_ACTION_DONE
-        taskEditText.setSingleLine(true)
+        taskEditText.isSingleLine = true
+
+        // Ensure we have a Task reference to track
+        val targetDate = selectedDate ?: today
+        val task = existingTask ?: Task(text = "", color = color, categoryName = categoryName).also { newTask ->
+            tasksByDate.getOrPut(targetDate) { mutableListOf() }.add(newTask)
+            binding.calendarView.notifyDateChanged(targetDate)
+        }
+        
+        taskEditText.setText(task.text)
+        
+        // Update the stored data as the user types
+        taskEditText.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                task.text = s.toString()
+            }
+        })
 
         checkBox.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
@@ -215,7 +258,7 @@ class StudySpaceMainActivity : AppCompatActivity() {
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 disableEditing(taskEditText)
                 val currentIndex = container.indexOfChild(taskLayout)
-                val nextEditText = addTaskRow(container, color, currentIndex + 1)
+                val nextEditText = addTaskRow(container, color, categoryName, index = currentIndex + 1)
                 enableEditing(nextEditText)
                 true
             } else {
@@ -229,6 +272,9 @@ class StudySpaceMainActivity : AppCompatActivity() {
                 if (taskEditText.text.isEmpty()) {
                     if (backspacePressedOnce) {
                         container.removeView(taskLayout)
+                        // Remove the task from tracking and update calendar dots
+                        tasksByDate[targetDate]?.remove(task)
+                        binding.calendarView.notifyDateChanged(targetDate)
                         true
                     } else {
                         backspacePressedOnce = true
@@ -238,7 +284,9 @@ class StudySpaceMainActivity : AppCompatActivity() {
                     false
                 }
             } else {
-                backspacePressedOnce = false
+                if (event.action == KeyEvent.ACTION_DOWN) {
+                    backspacePressedOnce = false
+                }
                 false
             }
         }
@@ -251,7 +299,7 @@ class StudySpaceMainActivity : AppCompatActivity() {
         return taskEditText
     }
 
-    private fun addAddTaskTrigger(container: LinearLayout, color: Int) {
+    private fun addAddTaskTrigger(container: LinearLayout, color: Int, categoryName: String) {
         val trigger = TextView(this)
         trigger.text = getString(R.string.double_tap_to_add_task)
         trigger.textSize = 14f
@@ -265,9 +313,9 @@ class StudySpaceMainActivity : AppCompatActivity() {
             override fun onDoubleTap(e: MotionEvent): Boolean {
                 val index = container.indexOfChild(trigger)
                 container.removeView(trigger)
-                val et = addTaskRow(container, color, index)
+                val et = addTaskRow(container, color, categoryName, index = index)
                 enableEditing(et)
-                addAddTaskTrigger(container, color)
+                addAddTaskTrigger(container, color, categoryName)
                 return true
             }
         })
@@ -286,7 +334,7 @@ class StudySpaceMainActivity : AppCompatActivity() {
         editText.isFocusableInTouchMode = true
         editText.requestFocus()
         editText.setSelection(editText.text.length)
-        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
         imm.showSoftInput(editText, InputMethodManager.SHOW_IMPLICIT)
     }
 
@@ -294,7 +342,7 @@ class StudySpaceMainActivity : AppCompatActivity() {
         editText.isFocusable = false
         editText.isFocusableInTouchMode = false
         editText.clearFocus()
-        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(editText.windowToken, 0)
     }
 
@@ -341,9 +389,28 @@ class StudySpaceMainActivity : AppCompatActivity() {
                             container.textView.setTextColor(Color.BLACK)
                         }
                     }
+
+                    // Render task dots under the day number
+                    container.dotContainer.removeAllViews()
+                    val dayTasks = tasksByDate[data.date]
+                    if (dayTasks != null && dayTasks.isNotEmpty()) {
+                        if (dayTasks.size > 4) {
+                            // Rule: 3 dots + a plus sign if more than 4 tasks
+                            for (i in 0 until 3) {
+                                container.dotContainer.addView(createDotView(dayTasks[i].color))
+                            }
+                            container.dotContainer.addView(createPlusSignView())
+                        } else {
+                            // Rule: Show up to 4 dots matching task colors
+                            for (task in dayTasks) {
+                                container.dotContainer.addView(createDotView(task.color))
+                            }
+                        }
+                    }
                 } else {
                     // Gray out dates from adjacent months
                     container.textView.setTextColor(Color.LTGRAY)
+                    container.dotContainer.removeAllViews()
                 }
             }
         }
@@ -373,10 +440,44 @@ class StudySpaceMainActivity : AppCompatActivity() {
         binding.calendarView.scrollToMonth(currentMonth)
     }
 
+    private fun createDotView(color: Int): View {
+        val dot = View(this)
+        val density = resources.displayMetrics.density
+        val size = (6 * density).toInt()
+        val params = LinearLayout.LayoutParams(size, size)
+        val margin = (2 * density).toInt()
+        params.setMargins(margin, 0, margin, 0)
+        dot.layoutParams = params
+        val drawable = GradientDrawable()
+        drawable.shape = GradientDrawable.OVAL
+        drawable.setColor(color)
+        dot.background = drawable
+        return dot
+    }
+
+    private fun createPlusSignView(): TextView {
+        val plus = TextView(this)
+        plus.text = "+"
+        plus.textSize = 10f
+        plus.setTextColor(Color.GRAY)
+        plus.setTypeface(null, Typeface.BOLD)
+        plus.includeFontPadding = false
+        val density = resources.displayMetrics.density
+        val params = LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        params.gravity = Gravity.CENTER_VERTICAL
+        params.setMargins((2 * density).toInt(), 0, 0, 0)
+        plus.layoutParams = params
+        return plus
+    }
+
     /**
      * View holder for a single calendar day cell.
      */
     class DayViewContainer(view: View) : ViewContainer(view) {
         val textView: TextView = view.findViewById(R.id.calendarDayText)
+        val dotContainer: LinearLayout = view.findViewById(R.id.dotContainer)
     }
 }

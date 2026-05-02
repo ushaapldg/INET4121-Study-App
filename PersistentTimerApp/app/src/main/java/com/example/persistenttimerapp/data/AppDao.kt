@@ -13,11 +13,20 @@ interface AppDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCategory(category: Category)
 
-    @Query("SELECT * FROM tasks WHERE categoryId = :catId")
-    fun getTasksByCategory(catId: Int): Flow<List<Task>>
+    @Delete
+    suspend fun deleteCategory(category: Category)
 
-    @Insert
+    @Query("SELECT * FROM tasks")
+    fun getAllTasks(): Flow<List<Task>>
+
+    @Query("SELECT * FROM tasks WHERE categoryId = :catId AND dateCompleted = :date")
+    fun getTasksByCategoryAndDate(catId: Int, date: Long): Flow<List<Task>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTask(task: Task)
+
+    @Update
+    suspend fun updateTask(task: Task)
 
     @Delete
     suspend fun deleteTask(task: Task)

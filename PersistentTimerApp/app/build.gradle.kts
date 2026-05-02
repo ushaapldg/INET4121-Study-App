@@ -1,12 +1,12 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    id("kotlin-kapt") // Add this line
+    id("kotlin-kapt")
 }
 
 android {
     namespace = "com.example.persistenttimerapp"
-    compileSdk = 35 // Standardized to 35 if 36 isn't fully stable in your env, or keep 36 if preferred.
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.persistenttimerapp"
@@ -49,8 +49,9 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
 
-    // Added from testCalendar
     implementation("com.kizitonwose.calendar:view:2.5.0")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 
@@ -58,8 +59,6 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     implementation("androidx.room:room-runtime:2.6.1")
-    //For Kotlin extension coroutines for room.
     implementation("androidx.room:room-ktx:2.6.1")
-    //To use kotlin annotation processor.
     kapt("androidx.room:room-compiler:2.6.1")
 }

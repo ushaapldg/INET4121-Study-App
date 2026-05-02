@@ -1,6 +1,5 @@
 package com.example.persistenttimerapp
 
-import android.content.Context
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Color
@@ -8,8 +7,6 @@ import android.graphics.Paint
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
 import android.view.GestureDetector
 import android.view.Gravity
 import android.view.KeyEvent
@@ -22,9 +19,16 @@ import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.graphics.toColorInt
+import androidx.lifecycle.lifecycleScope
+import com.example.persistenttimerapp.data.AppDatabase
+import com.example.persistenttimerapp.data.StudyViewModel
+import com.example.persistenttimerapp.data.StudyViewModelFactory
+import com.example.persistenttimerapp.data.entities.Category
+import com.example.persistenttimerapp.data.entities.Task
 import com.example.persistenttimerapp.databinding.ActivityMainBinding
 import com.kizitonwose.calendar.core.CalendarDay
 import com.kizitonwose.calendar.core.DayPosition
@@ -33,6 +37,8 @@ import com.kizitonwose.calendar.core.nextMonth
 import com.kizitonwose.calendar.core.previousMonth
 import com.kizitonwose.calendar.view.MonthDayBinder
 import com.kizitonwose.calendar.view.ViewContainer
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.LocalDate
@@ -42,25 +48,21 @@ import java.time.format.TextStyle
 import java.util.*
 
 /**
- * Main Activity that manages the Calendar View and To-Do List.
+ * Main Activity that manages the Calendar View and To-Do List with Room Database Persistence and ViewModel.
  */
 class StudySpaceMainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
+    
+    private val viewModel: StudyViewModel by viewModels {
+        StudyViewModelFactory(AppDatabase.getDatabase(this).appDao())
+    }
 
     // Calendar Variables
     private var selectedDate: LocalDate? = LocalDate.now()
     private val today = LocalDate.now()
 
-    // To-Do Variables
-    private val categories = mutableListOf<Category>()
-    
-    // Data class to store task information for persistence and dots
-    data class Task(val id: String = UUID.randomUUID().toString(), var text: String, val color: Int, val categoryName: String)
-    
-    // Map to keep track of tasks for each date to show dots on the calendar and restore them in the UI
-    private val tasksByDate = mutableMapOf<LocalDate, MutableList<Task>>()
-
-    data class Category(val name: String, val color: Int)
+    // Cache for calendar dots to avoid frequent DB hits during bind
+    private var allTasks = listOf<Task>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -80,11 +82,26 @@ class StudySpaceMainActivity : AppCompatActivity() {
             showAddCategoryPopup()
         }
 
-        // Initial setup of UI content
-        refreshUIForNewDay()
+        // Start observing data changes
+        observeData()
     }
 
-    // --- To-Do List Logic ---
+    private fun observeData() {
+        // Observe all tasks to update calendar dots
+        lifecycleScope.launch {
+            viewModel.allTasks.collectLatest { tasks ->
+                allTasks = tasks
+                binding.calendarView.notifyCalendarChanged()
+            }
+        }
+
+        // Observe categories to rebuild the To-Do list
+        lifecycleScope.launch {
+            viewModel.allCategories.collectLatest { categories ->
+                refreshUIWithData(categories)
+            }
+        }
+    }
 
     private fun updateDateDisplay() {
         val sdf = SimpleDateFormat("EEEE M/d", Locale.getDefault())
@@ -92,11 +109,11 @@ class StudySpaceMainActivity : AppCompatActivity() {
         binding.dateText.text = sdf.format(date)
     }
 
-    private fun refreshUIForNewDay() {
+    private fun refreshUIWithData(categories: List<Category>) {
         updateDateDisplay()
         binding.categoryContainer.removeAllViews()
         categories.forEach { category ->
-            addCategoryViews(category.name, category.color)
+            addCategoryViews(category)
         }
     }
 
@@ -153,17 +170,14 @@ class StudySpaceMainActivity : AppCompatActivity() {
             .setPositiveButton(R.string.add) { _, _ ->
                 val name = input.text.toString()
                 if (name.isNotEmpty()) {
-                    val category = Category(name, selectedColor)
-                    categories.add(category)
-                    addCategoryViews(name, selectedColor)
+                    viewModel.insertCategory(name, selectedColor)
                 }
             }
             .setNegativeButton(R.string.cancel, null)
             .show()
     }
 
-    private fun addCategoryViews(name: String, color: Int) {
-        // Create a wrapper for each category to keep its title, tasks, and trigger grouped together.
+    private fun addCategoryViews(category: Category) {
         val categoryWrapper = LinearLayout(this)
         categoryWrapper.orientation = LinearLayout.VERTICAL
         categoryWrapper.layoutParams = LinearLayout.LayoutParams(
@@ -173,26 +187,48 @@ class StudySpaceMainActivity : AppCompatActivity() {
         binding.categoryContainer.addView(categoryWrapper)
 
         val categoryTextView = TextView(this)
-        categoryTextView.text = name
+        categoryTextView.text = category.name
         categoryTextView.textSize = 24f
         categoryTextView.setTypeface(null, Typeface.BOLD)
-        categoryTextView.setTextColor(color)
+        categoryTextView.setTextColor(category.color)
         
         val params = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         params.setMargins(0, 32, 0, 8)
         categoryTextView.layoutParams = params
         categoryWrapper.addView(categoryTextView)
 
-        // RESTORE: Load any existing tasks for this category and selected date
-        val date = selectedDate ?: today
-        tasksByDate[date]?.filter { it.categoryName == name }?.forEach { task ->
-            addTaskRow(categoryWrapper, color, name, existingTask = task)
+        // DELETE CATEGORY: Long click to show deletion dialog
+        categoryTextView.setOnLongClickListener {
+            AlertDialog.Builder(this)
+                .setTitle(getString(R.string.delete_category_title))
+                .setMessage(getString(R.string.delete_category_message, category.name))
+                .setPositiveButton(R.string.delete) { _, _ ->
+                    viewModel.deleteCategory(category)
+                }
+                .setNegativeButton(R.string.cancel, null)
+                .show()
+            true
         }
 
-        addAddTaskTrigger(categoryWrapper, color, name)
+        // Load tasks for this category and date
+        val dateLong = (selectedDate ?: today).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        lifecycleScope.launch {
+            viewModel.getTasksByCategoryAndDate(category.id, dateLong).collectLatest { tasks ->
+                // Refresh logic: Keep the title (index 0), remove rest
+                val childCount = categoryWrapper.childCount
+                if (childCount > 1) {
+                    categoryWrapper.removeViews(1, childCount - 1)
+                }
+                
+                tasks.forEach { task ->
+                    addTaskRow(categoryWrapper, category.color, category.id, existingTask = task)
+                }
+                addAddTaskTrigger(categoryWrapper, category.color, category.id)
+            }
+        }
     }
 
-    private fun addTaskRow(container: LinearLayout, color: Int, categoryName: String, existingTask: Task? = null, index: Int = -1): EditText {
+    private fun addTaskRow(container: LinearLayout, color: Int, categoryId: Int, existingTask: Task? = null, index: Int = -1): EditText {
         val taskLayout = LinearLayout(this)
         taskLayout.orientation = LinearLayout.HORIZONTAL
         val params = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
@@ -212,23 +248,24 @@ class StudySpaceMainActivity : AppCompatActivity() {
         taskEditText.imeOptions = EditorInfo.IME_ACTION_DONE
         taskEditText.isSingleLine = true
 
-        // Ensure we have a Task reference to track
         val targetDate = selectedDate ?: today
-        val task = existingTask ?: Task(text = "", color = color, categoryName = categoryName).also { newTask ->
-            tasksByDate.getOrPut(targetDate) { mutableListOf() }.add(newTask)
-            binding.calendarView.notifyDateChanged(targetDate)
-        }
+        val dateLong = targetDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
         
-        taskEditText.setText(task.text)
+        taskEditText.setText(existingTask?.taskName ?: "")
         
-        // Update the stored data as the user types
-        taskEditText.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: Editable?) {
-                task.text = s.toString()
+        taskEditText.onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus) {
+                disableEditing(taskEditText)
+                val newName = taskEditText.text.toString()
+                if (newName.isNotEmpty()) {
+                    if (existingTask == null) {
+                        viewModel.insertTask(categoryId, newName, dateLong)
+                    } else {
+                        viewModel.updateTask(existingTask.copy(taskName = newName))
+                    }
+                }
             }
-        })
+        }
 
         checkBox.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
@@ -257,41 +294,21 @@ class StudySpaceMainActivity : AppCompatActivity() {
         taskEditText.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 disableEditing(taskEditText)
-                val currentIndex = container.indexOfChild(taskLayout)
-                val nextEditText = addTaskRow(container, color, categoryName, index = currentIndex + 1)
-                enableEditing(nextEditText)
                 true
             } else {
                 false
             }
         }
 
-        var backspacePressedOnce = false
         taskEditText.setOnKeyListener { _, keyCode, event ->
-            if (keyCode == KeyEvent.KEYCODE_DEL && event.action == KeyEvent.ACTION_DOWN) {
-                if (taskEditText.text.isEmpty()) {
-                    if (backspacePressedOnce) {
-                        container.removeView(taskLayout)
-                        // Remove the task from tracking and update calendar dots
-                        tasksByDate[targetDate]?.remove(task)
-                        binding.calendarView.notifyDateChanged(targetDate)
-                        true
-                    } else {
-                        backspacePressedOnce = true
-                        false
-                    }
-                } else {
-                    false
+            if (keyCode == KeyEvent.KEYCODE_DEL && event.action == KeyEvent.ACTION_DOWN && taskEditText.text.isEmpty()) {
+                existingTask?.let { task ->
+                    viewModel.deleteTask(task)
                 }
-            } else {
-                if (event.action == KeyEvent.ACTION_DOWN) {
-                    backspacePressedOnce = false
-                }
-                false
-            }
+                container.removeView(taskLayout)
+                true
+            } else false
         }
-
-        taskEditText.onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus -> if (!hasFocus) disableEditing(taskEditText) }
 
         taskLayout.addView(checkBox)
         taskLayout.addView(taskEditText)
@@ -299,7 +316,7 @@ class StudySpaceMainActivity : AppCompatActivity() {
         return taskEditText
     }
 
-    private fun addAddTaskTrigger(container: LinearLayout, color: Int, categoryName: String) {
+    private fun addAddTaskTrigger(container: LinearLayout, color: Int, categoryId: Int) {
         val trigger = TextView(this)
         trigger.text = getString(R.string.double_tap_to_add_task)
         trigger.textSize = 14f
@@ -312,10 +329,8 @@ class StudySpaceMainActivity : AppCompatActivity() {
         val gd = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
             override fun onDoubleTap(e: MotionEvent): Boolean {
                 val index = container.indexOfChild(trigger)
-                container.removeView(trigger)
-                val et = addTaskRow(container, color, categoryName, index = index)
+                val et = addTaskRow(container, color, categoryId, index = index)
                 enableEditing(et)
-                addAddTaskTrigger(container, color, categoryName)
                 return true
             }
         })
@@ -348,32 +363,31 @@ class StudySpaceMainActivity : AppCompatActivity() {
 
     // --- Calendar Logic ---
 
-    /**
-     * Configures the CalendarView, sets up day binding (rendering and selection), and navigation listeners.
-     */
     private fun setupCalendar() {
-        // Binds data and logic to each day cell in the calendar
         binding.calendarView.dayBinder = object : MonthDayBinder<DayViewContainer> {
             override fun create(view: View) = DayViewContainer(view)
 
             override fun bind(container: DayViewContainer, data: CalendarDay) {
                 container.textView.text = data.date.dayOfMonth.toString()
 
-                // Selection logic when a day is clicked
                 container.view.setOnClickListener {
                     if (data.position == DayPosition.MonthDate) {
                         val currentSelection = selectedDate
                         selectedDate = if (currentSelection == data.date) null else data.date
                         binding.calendarView.notifyDateChanged(data.date)
-                        currentSelection?.let { binding.calendarView.notifyDateChanged(it) }
-                        refreshUIForNewDay()
+                        currentSelection?.let { date -> binding.calendarView.notifyDateChanged(date) }
+                        
+                        // Force UI refresh for the new selected date
+                        lifecycleScope.launch {
+                           viewModel.allCategories.collectLatest { categories ->
+                               refreshUIWithData(categories)
+                           }
+                        }
                     }
                 }
 
-                // Styling for month dates (Today, Selected, and Regular)
                 if (data.position == DayPosition.MonthDate) {
                     container.textView.visibility = View.VISIBLE
-                    container.textView.setTypeface(null, Typeface.NORMAL)
                     container.textView.background = null
 
                     when (data.date) {
@@ -387,41 +401,32 @@ class StudySpaceMainActivity : AppCompatActivity() {
                         }
                         else -> {
                             container.textView.setTextColor(Color.BLACK)
+                            container.textView.setTypeface(null, Typeface.NORMAL)
                         }
                     }
 
-                    // Render task dots under the day number
                     container.dotContainer.removeAllViews()
-                    val dayTasks = tasksByDate[data.date]
-                    if (dayTasks != null && dayTasks.isNotEmpty()) {
-                        if (dayTasks.size > 4) {
-                            // Rule: 3 dots + a plus sign if more than 4 tasks
-                            for (i in 0 until 3) {
-                                container.dotContainer.addView(createDotView(dayTasks[i].color))
-                            }
-                            container.dotContainer.addView(createPlusSignView())
-                        } else {
-                            // Rule: Show up to 4 dots matching task colors
-                            for (task in dayTasks) {
-                                container.dotContainer.addView(createDotView(task.color))
-                            }
+                    val dayLong = data.date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                    val dayTasks = allTasks.filter { it.dateCompleted == dayLong }
+                    
+                    if (dayTasks.isNotEmpty()) {
+                        dayTasks.take(4).forEach { _ ->
+                            container.dotContainer.addView(createDotView(Color.GRAY)) 
                         }
+                        if (dayTasks.size > 4) container.dotContainer.addView(createPlusSignView())
                     }
                 } else {
-                    // Gray out dates from adjacent months
                     container.textView.setTextColor(Color.LTGRAY)
                     container.dotContainer.removeAllViews()
                 }
             }
         }
 
-        // Updates the Month/Year title when the calendar is scrolled
         binding.calendarView.monthScrollListener = { month ->
             val title = "${month.yearMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault())} ${month.yearMonth.year}"
             binding.monthYearText.text = title
         }
 
-        // Navigation for Next and Previous month buttons
         binding.nextMonthButton.setOnClickListener {
             binding.calendarView.findFirstVisibleMonth()?.let {
                 binding.calendarView.scrollToMonth(it.yearMonth.nextMonth)
@@ -434,7 +439,6 @@ class StudySpaceMainActivity : AppCompatActivity() {
             }
         }
 
-        // Initial setup of the calendar range and starting month
         val currentMonth = YearMonth.now()
         binding.calendarView.setup(currentMonth.minusMonths(100), currentMonth.plusMonths(100), daysOfWeek().first())
         binding.calendarView.scrollToMonth(currentMonth)
@@ -463,19 +467,13 @@ class StudySpaceMainActivity : AppCompatActivity() {
         plus.setTypeface(null, Typeface.BOLD)
         plus.includeFontPadding = false
         val density = resources.displayMetrics.density
-        val params = LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.WRAP_CONTENT,
-            ViewGroup.LayoutParams.WRAP_CONTENT
-        )
+        val params = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         params.gravity = Gravity.CENTER_VERTICAL
         params.setMargins((2 * density).toInt(), 0, 0, 0)
         plus.layoutParams = params
         return plus
     }
 
-    /**
-     * View holder for a single calendar day cell.
-     */
     class DayViewContainer(view: View) : ViewContainer(view) {
         val textView: TextView = view.findViewById(R.id.calendarDayText)
         val dotContainer: LinearLayout = view.findViewById(R.id.dotContainer)

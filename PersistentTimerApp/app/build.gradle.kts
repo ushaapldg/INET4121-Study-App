@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    id("kotlin-kapt") // Add this line
 }
 
 android {
@@ -56,4 +57,9 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    implementation("androidx.room:room-runtime:2.6.1")
+    //For Kotlin extension coroutines for room.
+    implementation("androidx.room:room-ktx:2.6.1")
+    //To use kotlin annotation processor.
+    kapt("androidx.room:room-compiler:2.6.1")
 }

@@ -63,6 +63,7 @@ class StudySpaceMainActivity : AppCompatActivity() {
 
     // Cache for calendar dots to avoid frequent DB hits during bind
     private var allTasks = listOf<Task>()
+    private var categoryColorMap = mapOf<Int, Int>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -98,7 +99,9 @@ class StudySpaceMainActivity : AppCompatActivity() {
         // Observe categories to rebuild the To-Do list
         lifecycleScope.launch {
             viewModel.allCategories.collectLatest { categories ->
+                categoryColorMap = categories.associate { it.id to it.color }
                 refreshUIWithData(categories)
+                binding.calendarView.notifyCalendarChanged()
             }
         }
     }
@@ -410,8 +413,9 @@ class StudySpaceMainActivity : AppCompatActivity() {
                     val dayTasks = allTasks.filter { it.dateCompleted == dayLong }
                     
                     if (dayTasks.isNotEmpty()) {
-                        dayTasks.take(4).forEach { _ ->
-                            container.dotContainer.addView(createDotView(Color.GRAY)) 
+                        dayTasks.take(4).forEach { task ->
+                            val color = categoryColorMap[task.categoryId] ?: Color.GRAY
+                            container.dotContainer.addView(createDotView(color))
                         }
                         if (dayTasks.size > 4) container.dotContainer.addView(createPlusSignView())
                     }

@@ -6,3 +6,13 @@ This specific file will be the main file. It will create the application, and wi
 
 To change the UI specifically, it will be listed in the "res" folder in the main folder.
 Click the "layout" folder -> The layouts for everything should be posted those folders.
+
+# Intro Paragraph
+
+# Visual Demo
+
+# User Instructions
+
+# Developer Instructions
+
+# Known Issues

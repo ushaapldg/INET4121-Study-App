@@ -12,7 +12,11 @@ Click the "layout" folder -> The layouts for everything should be posted those f
 # Visual Demo
 
 # User Instructions
+How to use the application on phone
 
 # Developer Instructions
+How to build and install the app locally - Riley
+How to modify the application - Usha
 
 # Known Issues
+Write in existing issues/future changes

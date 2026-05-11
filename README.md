@@ -75,9 +75,31 @@ Enter hours, minutes, and seconds directly into the **HH : MM : SS** fields.
 
 ## Developer Instructions
 # How to build and install the app locally: 
-Optional: If you want to run on an emulator, Android Studio is the recommended IDE to run the application. You will only need to run step 1 if using Android Studio. Run the application via the PersistentTimerApp folder. Step 1: Open up your terminal app and clone the repository: git clone https://github.com/ushaapldg/INET4121-Study-App.git, Step 2: Change directory to the app directory: cd INET-4121-Study-App, Step 3: Be sure to install any independencies: npm install, Step 4: To run the build, use npm run build OR npm start OR npm run dev to run in developer mode.
+Optional: If you want to run on an emulator, Android Studio is the recommended IDE to run the application. You will only need to run step 1 if using Android Studio. Run the application via the PersistentTimerApp folder. 
+Step 1: Open up your terminal app and clone the repository: git clone https://github.com/ushaapldg/INET4121-Study-App.git
+Step 2: Change directory to the app directory: cd INET-4121-Study-App
+Step 3: Be sure to install any independencies: npm install
+Step 4: To run the build, use npm run build OR npm start OR npm run dev to run in developer mode.
 
 # Modifications 
+1. Frontend & User Interface (UI)
+If you are changing how the app looks or how users interact with the screen:
+•Main Pages: Look in src/pages/ or src/app/ (for Next.js) or pages/ (for Nuxt/Vue). Each file typically corresponds to a URL route (e.g., about.tsx is /about).
+•Reusable Components: Look in src/components/. This is where you find UI elements like Navbar, Footer, Button, or Card that appear on multiple pages.
+•Global Styles: Styles are usually in src/styles/ or a file like globals.css. If using Tailwind, configuration is in tailwind.config.js.
+•Static Assets: Images, icons, and fonts are typically kept in the public/ or src/assets/ folder.
+
+2. Backend & Data Logic
+If you are changing how data is processed, saved, or retrieved:
+•API Endpoints: In modern full-stack frameworks (like Next.js), look in src/app/api/. In dedicated backends (Node/Express), look in src/routes/ or src/controllers/.
+•Database Models: To change how data is structured in your database, look in src/models/ (for Mongoose/Sequelize) or prisma/schema.prisma (if using Prisma).
+•Business Logic/Services: Complex logic is often abstracted into a src/services/ or src/lib/ folder to keep the controllers clean.
+
+3. Application Configuration
+If you are changing how the app connects to external services or behaves:
+•Environment Variables: Sensitive data like API keys and database URLs are found in .env or .env.local.
+•Dependencies: To add or update libraries, modify package.json (JavaScript/TypeScript), requirements.txt (Python), or Gemfile (Ruby).
+•App Config: Framework-specific settings are in files like next.config.js, nuxt.config.ts, or vite.config.ts.
 
 # Known Issues
 Write in existing issues/future changes

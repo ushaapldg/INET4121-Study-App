@@ -101,5 +101,12 @@ If you are changing how the app connects to external services or behaves:
 •Dependencies: To add or update libraries, modify package.json (JavaScript/TypeScript), requirements.txt (Python), or Gemfile (Ruby).
 •App Config: Framework-specific settings are in files like next.config.js, nuxt.config.ts, or vite.config.ts.
 
-# Known Issues
-Write in existing issues/future changes
+## Known Issues and Future Expansion
+# Account Security
+Implementing an account and security feature that allows users to login and save any of their tasks to their account. Adding security also allows account security within our application.
+# Improved UI/UX
+Conducting thorough user research to identify pain points for users and create better experience for student productivity.
+# Lock Feature
+Adding a lock feature where once you start your study session, notifications are disabled. As well as making apps that the user selects to be disabled while in the session.
+# Web App Capability
+Creating a browser version for web accessibility so users can access their productivity tools even without their phones.

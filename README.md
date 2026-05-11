@@ -16,12 +16,7 @@ https://youtu.be/arqrQT-Kxzk
 How to use the application on phone
 
 # Developer Instructions
-How to build and install the app locally
-  Optional: If you want to run on an emulator, Android Studio is the recommended IDE to run the application. You will only need to run step 1 if using Android Studio. Run the application via the PersistentTimerApp folder.
-  Step 1: Open up your terminal app and clone the repository: git clone https://github.com/ushaapldg/INET4121-Study-App.git
-  Step 2: Change directory to the app directory: cd INET-4121-Study-App
-  Step 3: Be sure to install any independencies: npm install
-  Step 4: To run the build, use npm run build OR npm start OR npm run dev to run in developer mode.
+How to build and install the app locally: Optional: If you want to run on an emulator, Android Studio is the recommended IDE to run the application. You will only need to run step 1 if using Android Studio. Run the application via the PersistentTimerApp folder. Step 1: Open up your terminal app and clone the repository: git clone https://github.com/ushaapldg/INET4121-Study-App.git, Step 2: Change directory to the app directory: cd INET-4121-Study-App, Step 3: Be sure to install any independencies: npm install, Step 4: To run the build, use npm run build OR npm start OR npm run dev to run in developer mode.
 
 How to modify the application - Usha
 

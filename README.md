@@ -15,7 +15,7 @@ https://youtu.be/arqrQT-Kxzk
 # User Instructions
 
 ## Overview
-This app combines a simple daily task organizer with a built‑in countdown timer. Users can select dates on a calendar, create categories, add tasks for specific days, and run a timer without leaving the app.
+This app combines a simple daily task organizer with a built‑in countdown timer. Users can select dates on a calendar, create categories, add tasks for specific days and run a timer without leaving the app.
 
 ---
 

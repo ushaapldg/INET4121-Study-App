@@ -1,15 +1,10 @@
-Project Documentation
+# StudySpace
+Your helper for improving productivity as a student.
 
-How to run the project: Make sure to run the project via the PersistentTimerApp folder.
-Open the "App" folder -> Open the src folder -> Open the java/com/example/persistent... folder -> Open MainActivity.kt
-This specific file will be the main file. It will create the application, and will allow us to make changes to the application when clicking buttons and etc.
+# Introduction
+StudySpace is a productivity application targeted towards students. The app consists of three key features: a calendar for deadline tracking and scheduling, a task list, and a Pomodoro study timer.  As academic tools increasingly become digital, StudySpace combines all your study tools on one digitized platform allowing all your digital learning materials to coexist in one place. This application was developed in Kotlin on Android Studio, and can be run from a phone or phone emulator. Each instance of the application will also have to connect to its own SQLite database that stores information about tasks and taks categories.
 
-To change the UI specifically, it will be listed in the "res" folder in the main folder.
-Click the "layout" folder -> The layouts for everything should be posted those folders.
-
-# Intro Paragraph
-
-# Visual Demo
+# Visual Demonstration
 https://youtu.be/arqrQT-Kxzk
 
 # User Instructions

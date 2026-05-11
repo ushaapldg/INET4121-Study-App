@@ -73,15 +73,15 @@ Enter hours, minutes, and seconds directly into the **HH : MM : SS** fields.
 - Project targets **SDK 20** (minimum Android version depends on your build settings).
 
 
-## Developer Instructions
-# How to build and install the app locally: 
+# Developer Instructions
+## How to build and install the app locally: 
 Optional: If you want to run on an emulator, Android Studio is the recommended IDE to run the application. You will only need to run step 1 if using Android Studio. Run the application via the PersistentTimerApp folder. 
 Step 1: Open up your terminal app and clone the repository: git clone https://github.com/ushaapldg/INET4121-Study-App.git
 Step 2: Change directory to the app directory: cd INET-4121-Study-App
 Step 3: Be sure to install any independencies: npm install
 Step 4: To run the build, use npm run build OR npm start OR npm run dev to run in developer mode.
 
-# Modifications 
+## Modifications 
 1. Frontend & User Interface (UI)
 If you are changing how the app looks or how users interact with the screen:
 •Main Pages: Look in src/pages/ or src/app/ (for Next.js) or pages/ (for Nuxt/Vue). Each file typically corresponds to a URL route (e.g., about.tsx is /about).
@@ -101,12 +101,12 @@ If you are changing how the app connects to external services or behaves:
 •Dependencies: To add or update libraries, modify package.json (JavaScript/TypeScript), requirements.txt (Python), or Gemfile (Ruby).
 •App Config: Framework-specific settings are in files like next.config.js, nuxt.config.ts, or vite.config.ts.
 
-## Known Issues and Future Expansion
-# Account Security
+# Known Issues and Future Expansion
+## Account Security
 Implementing an account and security feature that allows users to login and save any of their tasks to their account. Adding security also allows account security within our application.
-# Improved UI/UX
+## Improved UI/UX
 Conducting thorough user research to identify pain points for users and create better experience for student productivity.
-# Lock Feature
+## Lock Feature
 Adding a lock feature where once you start your study session, notifications are disabled. As well as making apps that the user selects to be disabled while in the session.
-# Web App Capability
+## Web App Capability
 Creating a browser version for web accessibility so users can access their productivity tools even without their phones.

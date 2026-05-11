@@ -10,6 +10,7 @@ Click the "layout" folder -> The layouts for everything should be posted those f
 # Intro Paragraph
 
 # Visual Demo
+https://youtu.be/arqrQT-Kxzk
 
 # User Instructions
 How to use the application on phone
